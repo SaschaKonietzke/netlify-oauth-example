@@ -6,7 +6,9 @@ const search      = document.location.search;
 const currentUrlEl  = document.getElementById('current-url');
 const clientIdForm  = document.getElementById('client-id-form');
 const clientIdInput = document.getElementById('client-id');
-const contentfulTokenInput = document.getElementById('contentful-token');
+const contentfulCdaTokenInput = document.getElementById('contentful-cda-token');
+const contentfulCmaTokenInput = document.getElementById('contentful-cma-token');
+const contentfulSpaceInput = document.getElementById('contentful-space');
 const authLink      = document.getElementById('auth-url');
 const appURL = 'https://deploy-preview-374--app.netlify.com';
 
@@ -26,7 +28,10 @@ function submitClientId(e) {
   e.preventDefault();
 
   var clientId = clientIdInput.value;
-  var contentfulToken = contentfulTokenInput.value;
+  var contentfulCdaToken = contentfulCdaTokenInput.value;
+  var contentfulCmaToken = contentfulCmaTokenInput.value;
+  var contentfulSpace = contentfulSpaceInput.value;
+
   if (clientId) {
     // We're stripping the trailing slash just in case you added
     // the site URL without trailing slash when creating the App
@@ -36,8 +41,11 @@ function submitClientId(e) {
         '&response_type=token' +
         '&redirect_uri=' + encodeURIComponent(redirectURI) +
         '&state=' + state +
-        '&repository=https://github.com/biilmann/contentful-deploy-demo' +
-        '#CONTENTFUL_TOKEN=' + encodeURIComponent(contentfulToken);
+        '&repository=https://github.com/SaschaKonietzke/contentful-deploy-demo-1' +
+        '#CONTENTFUL_CDA_TOKEN=' + encodeURIComponent(contentfulCdaToken) +
+        '&CONTENTFUL_CMA_TOKEN=' + encodeURIComponent(contentfulCmaToken) +
+        '&CONTENTFUL_SPACE=' + encodeURIComponent(contentfulSpace)
+        ;
     setCurrentStep(2);
   }
 }
@@ -96,6 +104,8 @@ function handleAccessToken() {
           'Authorization': `Bearer ${token}`
         }
       }).then((response) => {
+        console.log(response);
+
         response.json().then((hooks) => {
           showOutput(
             `Your site is: <a href="${adminURL}/deploys/${query.deploy_id}" target="_blank">${site.url}</a>` +
@@ -103,6 +113,16 @@ function handleAccessToken() {
               <strong>${hook.title}</strong> ${hook.url}
             </li>`))}</ul>`
           );
+
+          // create webhook and preview
+          var contentfulCmaToken = contentfulCmaTokenInput.value;
+          var contentfulSpace = contentfulSpaceInput.value;
+          var previewUrl = 'http://www.google.com/';
+
+
+          webhookJsonResponse = await createWebhook(contentfulSpace, contentfulCmaToken, hooks[0].url).json();
+          previewJsonResponse = await createPreview(contentfulSpace, contentfulCmaToken, previewUrl).json();
+
         });
       });
 
@@ -154,4 +174,52 @@ if (hash) {
   // our app.
   state = Math.random();
   localStorage.setItem(state, true);
+}
+
+
+function createPreview(contentfulSpace, token, url) {
+  const payload = {
+    name: "Netlify",
+    configurations: [
+      {
+        contentType: "post",
+        url: url,
+        enabled: true
+      }
+    ]
+
+  }
+  var response = await fetch(
+                        `https://api.contentful.com/spaces/${contentfulSpace}/preview_environments/`,
+                        {
+                          method: 'POST',
+                          body : payload
+                          headers: {
+                            'Authorization': `Bearer ${token}`
+                          }
+                        }
+                      )
+  return response
+}
+
+function createWebhook(contentfulSpace, token, url) {
+  const payload = {
+    name: "Netlify",
+    url: url,
+    topics: [
+      "Entry.*"
+    ]
+  }
+  var response = await fetch(
+                        `https://api.contentful.com/spaces/${contentfulSpace}/webhook_definitions/`,
+                        {
+                          method: 'POST',
+                          body: payload,
+                          headers:{
+                            'Authorization': `Bearer ${token}`
+                          }
+                        }
+                      )
+
+  return response;
 }
