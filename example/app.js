@@ -3,7 +3,7 @@
  */
 const hash        = document.location.hash;
 const search      = document.location.search;
-const currentUrlEl  = document.getElementById('current-url');
+//const currentUrlEl  = document.getElementById('current-url');
 const clientIdForm  = document.getElementById('client-id-form');
 const clientIdInput = document.getElementById('client-id');
 const contentfulCdaTokenInput = document.getElementById('contentful-cda-token');
@@ -31,6 +31,11 @@ function submitClientId(e) {
   var contentfulCdaToken = contentfulCdaTokenInput.value;
   var contentfulCmaToken = contentfulCmaTokenInput.value;
   var contentfulSpace = contentfulSpaceInput.value;
+  var projectTemplate = document.querySelector('input[name="project-template"]:checked').value;
+
+  localStorage.setItem('contentfulCdaToken', contentfulCdaToken);
+  localStorage.setItem('contentfulCmaToken', contentfulCmaToken);
+  localStorage.setItem('contentfulSpace', contentfulSpace);
 
   if (clientId) {
     // We're stripping the trailing slash just in case you added
@@ -41,7 +46,7 @@ function submitClientId(e) {
         '&response_type=token' +
         '&redirect_uri=' + encodeURIComponent(redirectURI) +
         '&state=' + state +
-        '&repository=https://github.com/SaschaKonietzke/contentful-deploy-demo-1' +
+        '&repository=' + projectTemplate +
         '#CONTENTFUL_CDA_TOKEN=' + encodeURIComponent(contentfulCdaToken) +
         '&CONTENTFUL_CMA_TOKEN=' + encodeURIComponent(contentfulCmaToken) +
         '&CONTENTFUL_SPACE=' + encodeURIComponent(contentfulSpace)
@@ -104,24 +109,22 @@ function handleAccessToken() {
           'Authorization': `Bearer ${token}`
         }
       }).then((response) => {
-        console.log(response);
-
         response.json().then((hooks) => {
+          // create webhook and preview
+          var contentfulCdaToken = localStorage.getItem('contentfulCdaToken');
+          var contentfulCmaToken = localStorage.getItem('contentfulCmaToken');
+          var contentfulSpace = localStorage.getItem('contentfulSpace');
+
+          var contentfulUrl = 'https://app.contentful.com/spaces/' + contentfulSpace;
+
           showOutput(
-            `Your site is: <a href="${adminURL}/deploys/${query.deploy_id}" target="_blank">${site.url}</a>` +
-            `<h3>Build hooks: </h3><ul>${hooks.map((hook) => (`<li>
-              <strong>${hook.title}</strong> ${hook.url}
-            </li>`))}</ul>`
+            `Contentful URL: <a href="${contentfulUrl}" target="_blank">${contentfulUrl}</a><br/>` +
+            `Site URL: <a href="${site.url}" target="_blank">${site.url}</a><br/>` +
+            `Netlify Admin: <a href="${adminURL}/deploys/${query.deploy_id}" target="_blank">${adminURL}/deploys/${query.deploy_id}</a>`
           );
 
-          // create webhook and preview
-          var contentfulCmaToken = contentfulCmaTokenInput.value;
-          var contentfulSpace = contentfulSpaceInput.value;
-          var previewUrl = 'http://www.google.com/';
-
-
-          webhookJsonResponse = await createWebhook(contentfulSpace, contentfulCmaToken, hooks[0].url).json();
-          previewJsonResponse = await createPreview(contentfulSpace, contentfulCmaToken, previewUrl).json();
+          createWebhook(contentfulSpace, contentfulCmaToken, 'Netlify: ' + site.url, hooks[0].url);
+          createPreview(contentfulSpace, contentfulCmaToken, 'Netlify: ' + site.url, site.url);
 
         });
       });
@@ -166,7 +169,7 @@ if (hash) {
   setCurrentStep(3);
   handleAccessToken();
 } else {
-  currentUrlEl.textContent = document.location.href;
+  //currentUrlEl.textContent = document.location.href;
   clientIdForm.addEventListener('submit', submitClientId, false);
   setCurrentStep(1);
 
@@ -177,9 +180,9 @@ if (hash) {
 }
 
 
-function createPreview(contentfulSpace, token, url) {
+function createPreview(contentfulSpace, token, name, url) {
   const payload = {
-    name: "Netlify",
+    name: name,
     configurations: [
       {
         contentType: "post",
@@ -189,34 +192,38 @@ function createPreview(contentfulSpace, token, url) {
     ]
 
   }
-  var response = await fetch(
+  var response = fetch(
                         `https://api.contentful.com/spaces/${contentfulSpace}/preview_environments/`,
                         {
                           method: 'POST',
-                          body : payload
+                          body : JSON.stringify(payload),
+                          mode : 'cors',
                           headers: {
-                            'Authorization': `Bearer ${token}`
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/vnd.contentful.management.v1+json'
                           }
                         }
                       )
   return response
 }
 
-function createWebhook(contentfulSpace, token, url) {
+function createWebhook(contentfulSpace, token, name, url) {
   const payload = {
-    name: "Netlify",
+    name: name,
     url: url,
     topics: [
       "Entry.*"
     ]
   }
-  var response = await fetch(
+  var response = fetch(
                         `https://api.contentful.com/spaces/${contentfulSpace}/webhook_definitions/`,
                         {
                           method: 'POST',
-                          body: payload,
+                          body: JSON.stringify(payload),
+                          mode : 'cors',
                           headers:{
-                            'Authorization': `Bearer ${token}`
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/vnd.contentful.management.v1+json'
                           }
                         }
                       )

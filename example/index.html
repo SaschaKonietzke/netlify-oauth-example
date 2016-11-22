@@ -5,36 +5,40 @@
   <link rel="stylesheet" href="/styles.css"/>
 </head>
 <body>
-  <h1>This is a simple example of a "deploy to Netlify" flow</h1>
+  <h1>"Deploy to Netlify from Contentful" example</h1>
 
   <div id="step-1" class="step">
-    <h2>Step 1: Register your OAuth App</h2>
+    <h2>Step 1: Configure button</h2>
 
     <p>
-      Start by going to <a href="https://app.netlify.com/applications" target="_blank">https://app.netlify.com/applications</a>
-      and create a new OAuth Application.
+      Would later happen all within Contentful UI.
     </p>
-    <p>
-      Make sure you enter <div id="current-url"></div> as the <strong>Redirect URI</strong> for your new app.
-    </p>
-    <p>
-      Once your're done, enter the Client ID of your new application here:
-      <form id="client-id-form">
-        <input id="client-id" type="text" placeholder="Client ID"/>
 
-        <p>
-          The site we're creating will also need a CONTENTFUL_TOKEN environment variable.
-          Set the value of that token here before clicking the link below
-          (it doesn't need to be a valid token for the purpose of this demo).
-        </p>
+    <form id="client-id-form">
+      Client ID:
+      <input id="client-id" type="text" placeholder="Client ID" size="100" value="263fbca0b0a4a746ee12caa2157c94ae231d90ecdb2ffd177100c28cdb2aac10"/>
 
-        <input id="contentful-cda-token" placeholder="Contentful CDA Token" type="text">
-        <input id="contentful-cma-token" placeholder="Contentful CMA Token" type="text">
-        <input id="contentful-space" placeholder="Contentful Space ID" type="text">
+      <p>
+        The site we're creating will also need Contentful environment variables.
+        Set the value of that token here before clicking the link below
+        (it doesn't need to be a valid token for the purpose of this demo).
+      </p>
 
-        <button>Submit</button>
-      </form>
-    </p>
+      CDA Token:
+      <input id="contentful-cda-token" placeholder="Contentful CDA Token" type="text" size="100" value="7d7e7fe5d0186aa77b9bc6814ee278df31ccc284597f161bc62b7a227eea2b14"><br/>
+      CMA Token:
+      <input id="contentful-cma-token" placeholder="Contentful CMA Token" type="text" size="100" value="dd374b01b7e051f7aa83180706f77f0402489c50c0ab2fdfca6a7980c4c08b0a"><br/>
+      Space:
+      <input id="contentful-space" placeholder="Contentful Space ID" type="text" size="100" value="oxci6lz3l3tk"><br/>
+      Template:
+      <input name="project-template" type="radio" value="https://github.com/SaschaKonietzke/contentful-middleman-netlify" checked="checked">Middleman</input>
+
+      <input name="project-template" type="radio" value="https://github.com/SaschaKonietzke/contentful-middleman-netlify">Angular.js</input>
+
+      <input name="project-template" type="radio" value="https://github.com/SaschaKonietzke/contentful-metalsmith-netlify">Metalsmith</input>
+      <br/>
+      <button>Submit</button>
+    </form>
   </div>
 
   <div id="step-2" class="step">
@@ -46,14 +50,16 @@
   </div>
 
   <div id="step-3" class="step">
-    <h2>Step 3: Make API calls</h2>
+    <h2>Step 3: Netlify site created</h2>
 
     <p id="output">Loading sites for this user...</p>
+
+    <p>Created Contentful webhook</p>
+    <p>Created Contentful preview environment</p>
+    <p>Created GitHub project</p>
   </div>
 
   <br>
-
-  <p>Source code: <a target="_blank" href="https://github.com/SaschaKonietzke/contentful-deploy-demo-1">https://github.com/SaschaKonietzke/contentful-deploy-demo-1</a></p>
 
   <script src="/app.js"></script>
 </body>
